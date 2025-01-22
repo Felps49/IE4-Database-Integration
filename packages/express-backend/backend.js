@@ -1,6 +1,7 @@
 import express from "express";
 
 const app = express();
+app.use(express.json());
 const port = 8000;
 const users = {
     users_list: [
@@ -74,8 +75,8 @@ const users = {
   });
 
 const deleteUserByID = (id) => {
-    const user = users["users_list"].find((user) => user["id"] == id);
-    if (user != -1) {
+    const index = users["users_list"].find((user) => user["id"] == id);
+    if (index != undefined) {
         users["users_list"].splice(index, 1)
         return true;
     }
@@ -84,33 +85,31 @@ const deleteUserByID = (id) => {
 
 app.delete("/users", (req, res) => {
     const id = req.params["id"];
-    let Deleted = deleteUserByID;
-    if(Deleted) {
-        res.status(200).send('User ${id} Deleted');
+    let Deleted = deleteUserByID(id);
+    if(Deleted == undefined) {
+      res.status(404).send('Couldnt find user');
     } else {
-        res.status(404).send('Couldnt find user');
+      res.send(Deleted);
     }
 });
 
 const findUserByNameAndJob = (name, job) => {
     return users["users_list"].filter(
-      (user) => user["name"] === name && user["job"] == job
-    );
+      (user) => user["name"] === name && user["job"] == job);
   };
   
   app.get("/users", (req, res) => {
     const {name, job} = req.query;
     if (name && job) {
       let result = findUserByNameAndJob(name, job);
-      res.status(200).send({user_list: result})
+      res.send({user_list: result})
     } else if (name) {
-      let result = users["users_list"].filter((user) => user.name == name);
-      res.status(200).send({user_list: result});
+      let result = findUserByName(name);
+      res.send({user_list: result});
     } else {
-        res.status(200).send(users);
+        res.send(users);
     }
   });
-app.use(express.json());
 
 app.get("/users", (req, res) => {
   res.send(users);
