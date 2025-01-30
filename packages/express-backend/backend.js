@@ -65,33 +65,42 @@ const users = {
     }
   });
 
+  const generateId = () => {
+    return Math.random().toString(36).substring(2, 10);
+  };
+
   const addUser = (user) => {
+    user.id = generateId();
     users["users_list"].push(user);
     return user;
   };
   
   app.post("/users", (req, res) => {
     const userToAdd = req.body;
-    addUser(userToAdd);
-    res.send();
+    if (!userToAdd.name || !userToAdd.job) {
+      res.status(400).send({error: "Missing required fields"});
+      return; 
+    }
+    const newUser = addUser(userToAdd);
+    res.status(201).json(newUser)
   });
 
 const deleteUserByID = (id) => {
-    const index = users["users_list"].find((user) => user["id"] == id);
-    if (index != undefined) {
-        users["users_list"].splice(index, 1)
+    const index = users["users_list"].findIndex((user) => user["id"] == id);
+    if (index != -1) {
+        users["users_list"].splice(index, 1);
         return true;
     }
     return false;
 };
 
-app.delete("/users", (req, res) => {
-    const id = req.params["id"];
-    let Deleted = deleteUserByID(id);
-    if(Deleted == undefined) {
-      res.status(404).send('Couldnt find user');
+app.delete("/users/:id", (req, res) => {
+    const id = req.params.id;
+    let deleted = deleteUserByID(id);
+    if (deleted) {
+      res.status(204).send();
     } else {
-      res.send(Deleted);
+      res.status(404).send('Couldnt find user');
     }
 });
 
